@@ -71,7 +71,7 @@ Este projeto foi construído como uma demonstração de habilidades em desenvolv
 
 ## 👨‍💻 Desenvolvedor
 
-*   **[Márcio Rodrigo Souza Lima]**
-*   **LinkedIn:** [https://www.linkedin.com/in/marcio-lima-b1105627b/]
-*   **GitHub:** [https://github.com/MarcioRodrigoSL]
+*   **Desenvolvido por:** [Márcio Rodrigo Souza Lima](https://www.linkedin.com/in/marcio-lima-b1105627b/ )
+*   **GitHub:** [MarcioRodrigoSL](https://github.com/MarcioRodrigoSL )
+
 
