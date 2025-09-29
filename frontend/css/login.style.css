@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap' );
+body {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+.login-container { display: flex; justify-content: center; align-items: center; }
+.login-box {
+    background-color: rgba(255, 255, 255, 0.98);
+    padding: 40px 50px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    animation: fadeIn 0.8s ease-in-out;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+.login-box .logo {
+    width: 100px; height: 100px;
+    margin-bottom: 15px;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    object-fit: cover;
+}
+.login-box h2 { margin-bottom: 25px; color: #343a40; font-size: 1.7em; font-weight: 600; }
+.input-group { margin-bottom: 20px; text-align: left; }
+.input-group label { display: block; margin-bottom: 8px; color: #495057; font-weight: 500; }
+.input-group input { width: 100%; padding: 12px 15px; border: 1px solid #ced4da; border-radius: 8px; font-size: 1em; box-sizing: border-box; transition: all 0.3s ease; }
+.input-group input:focus { border-color: #007bff; box-shadow: 0 0 8px rgba(0, 123, 255, 0.3); outline: none; }
+.btn-confirm { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 1.1em; font-weight: 600; cursor: pointer; background-color: #007bff; color: #fff; transition: all 0.3s ease; margin-top: 10px; }
+.btn-confirm:hover { background-color: #0056b3; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4); transform: translateY(-2px); }
+#error-message { font-weight: 500; }

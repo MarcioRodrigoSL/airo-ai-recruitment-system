@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRO.AI - Gerenciar Vagas</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .vagas-main-container { display: grid; grid-template-columns: 1fr; gap: 40px; }
+        @media (min-width: 1024px) { .vagas-main-container { grid-template-columns: 1fr 2fr; } }
+        .lista-vagas-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        .vaga-card { background-color: var(--branco); border: 1px solid var(--borda-suave); border-radius: 12px; padding: 25px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .vaga-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); }
+        .vaga-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; }
+        .vaga-card-header h3 { color: var(--azul-principal); font-size: 1.4em; margin: 0; font-weight: 600; }
+        .vaga-card .status { padding: 5px 12px; border-radius: 15px; font-weight: 600; font-size: 0.8em; white-space: nowrap; }
+        .status.aberta { background-color: #d4edda; color: #155724; }
+        .status.fechada { background-color: #f8d7da; color: #721c24; }
+        .vaga-card p { color: var(--texto-secundario); font-size: 0.95em; margin-bottom: 15px; flex-grow: 1; }
+        .vaga-card .requisitos { font-size: 0.9em; color: var(--texto-principal); white-space: pre-wrap; background-color: var(--cinza-fundo); padding: 10px; border-radius: 5px; }
+        .card-actions { margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-excluir, .btn-editar { padding: 8px 15px; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9em; transition: background-color 0.3s ease; }
+        .btn-excluir { background-color: #dc3545; } .btn-excluir:hover { background-color: #c82333; }
+        .btn-editar { background-color: #ffc107; color: #212529; } .btn-editar:hover { background-color: #e0a800; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background-color: white; padding: 30px 40px; border-radius: 12px; width: 90%; max-width: 600px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-content h2 { margin-top: 0; color: var(--azul-principal); }
+        .modal-actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+        .btn-cancel, .btn-confirm { padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: 1px solid transparent; }
+        .btn-cancel { background-color: #6c757d; color: white; }
+        .btn-confirm { background-color: var(--azul-principal); color: white; }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <div class="logo-container"><img src="images/logo.png" alt="Logo AIRO.AI" class="logo"><h1>Airo.ai</h1></div>
+        <nav class="main-nav"><a href="dashboard.html">Dashboard</a><a href="ranking.html">Ranking</a><a href="vagas.html">Vagas Abertas</a><a href="configuracoes.html">Configurações</a><a href="login.html" id="logout-link">Sair</a></nav>
+    </header>
+    <div class="main-container vagas-main-container">
+        <section class="main-card">
+            <h2>Cadastrar Nova Vaga</h2>
+            <div class="input-group"><label for="vaga-titulo">Título da Vaga</label><input type="text" id="vaga-titulo" placeholder="Ex: Engenheiro de Dados Sênior"></div>
+            <div class="input-group"><label for="vaga-descricao">Descrição</label><textarea id="vaga-descricao" rows="5" placeholder="..."></textarea></div>
+            <div class="input-group"><label for="vaga-requisitos">Requisitos</label><textarea id="vaga-requisitos" rows="7" placeholder="..."></textarea></div>
+            <button id="btn-cadastrar-vaga" class="btn-analyze">Cadastrar Vaga</button>
+        </section>
+        <section class="main-card">
+            <h2>Vagas Cadastradas</h2>
+            <div id="lista-vagas" class="lista-vagas-grid"><p>Carregando vagas...</p></div>
+        </section>
+    </div>
+    <div id="edit-modal" class="modal-overlay"><div class="modal-content"><h2>Editar Vaga</h2><input type="hidden" id="edit-vaga-id"><div class="input-group"><label for="edit-vaga-titulo">Título</label><input type="text" id="edit-vaga-titulo"></div><div class="input-group"><label for="edit-vaga-descricao">Descrição</label><textarea id="edit-vaga-descricao" rows="4"></textarea></div><div class="input-group"><label for="edit-vaga-requisitos">Requisitos</label><textarea id="edit-vaga-requisitos" rows="6"></textarea></div><div class="input-group"><label for="edit-vaga-status">Status</label><select id="edit-vaga-status"><option value="Aberta">Aberta</option><option value="Fechada">Fechada</option></select></div><div class="modal-actions"><button id="btn-cancelar-edicao" class="btn-cancel">Cancelar</button><button id="btn-salvar-edicao" class="btn-confirm">Salvar</button></div></div></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('http://127.0.0.1:5000/status', { method: 'GET', credentials: 'include' }  ).then(response => { if (!response.ok) { window.location.href = 'login.html'; } return response.json(); }).then(data => { if (data.status !== 'logado') { window.location.href = 'login.html'; } }).catch(() => { window.location.href = 'login.html'; });
+            const API_URL = 'http://127.0.0.1:5000';
+            const listaVagasDiv = document.getElementById('lista-vagas' );
+            const modal = document.getElementById('edit-modal');
+            const btnSalvarEdicao = document.getElementById('btn-salvar-edicao');
+            const btnCancelarEdicao = document.getElementById('btn-cancelar-edicao');
+            function carregarVagas() { fetch(`${API_URL}/vagas`, { credentials: 'include' }).then(res => res.json()).then(vagas => { listaVagasDiv.innerHTML = ''; if (vagas.length === 0) { listaVagasDiv.innerHTML = '<p>Nenhuma vaga cadastrada.</p>'; return; } vagas.forEach(vaga => { const statusClass = vaga.status.toLowerCase(); const card = document.createElement('div'); card.className = 'vaga-card'; card.innerHTML = `<div class="vaga-card-header"><h3>${vaga.titulo}</h3><span class="status ${statusClass}">${vaga.status}</span></div><p>${vaga.descricao}</p><h4>Requisitos:</h4><pre class="requisitos">${vaga.requisitos}</pre><div class="card-actions"><button class="btn-editar" data-id="${vaga.id}">Editar</button><button class="btn-excluir" data-id="${vaga.id}">Excluir</button></div>`; listaVagasDiv.appendChild(card); }); }); }
+            document.getElementById('btn-cadastrar-vaga').addEventListener('click', function() { const dados = { titulo: document.getElementById('vaga-titulo').value, descricao: document.getElementById('vaga-descricao').value, requisitos: document.getElementById('vaga-requisitos').value }; if (!dados.titulo) { alert('O título é obrigatório.'); return; } fetch(`${API_URL}/vagas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados), credentials: 'include' }).then(res => res.json()).then(data => { alert(data.mensagem); carregarVagas(); document.getElementById('vaga-titulo').value = ''; document.getElementById('vaga-descricao').value = ''; document.getElementById('vaga-requisitos').value = ''; }); });
+            listaVagasDiv.addEventListener('click', function(event) { const target = event.target; const idVaga = target.dataset.id; if (target.classList.contains('btn-excluir')) { if (confirm(`Tem certeza?`)) { fetch(`${API_URL}/vagas/${idVaga}`, { method: 'DELETE', credentials: 'include' }).then(() => carregarVagas()); } } if (target.classList.contains('btn-editar')) { fetch(`${API_URL}/vagas/${idVaga}`, { credentials: 'include' }).then(res => res.json()).then(vaga => { document.getElementById('edit-vaga-id').value = vaga.id; document.getElementById('edit-vaga-titulo').value = vaga.titulo; document.getElementById('edit-vaga-descricao').value = vaga.descricao; document.getElementById('edit-vaga-requisitos').value = vaga.requisitos; document.getElementById('edit-vaga-status').value = vaga.status; modal.style.display = 'flex'; }); } });
+            btnSalvarEdicao.addEventListener('click', function() { const idVaga = document.getElementById('edit-vaga-id').value; const dados = { titulo: document.getElementById('edit-vaga-titulo').value, descricao: document.getElementById('edit-vaga-descricao').value, requisitos: document.getElementById('edit-vaga-requisitos').value, status: document.getElementById('edit-vaga-status').value }; fetch(`${API_URL}/vagas/${idVaga}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dados), credentials: 'include' }).then(() => { modal.style.display = 'none'; carregarVagas(); }); });
+            btnCancelarEdicao.addEventListener('click', () => modal.style.display = 'none');
+            modal.addEventListener('click', (e) => { if (e.target === modal) { modal.style.display = 'none'; } });
+            document.getElementById('logout-link').addEventListener('click', function(e) { e.preventDefault(); fetch(`${API_URL}/logout`, { method: 'POST', credentials: 'include' }).then(() => window.location.href = 'login.html'); });
+            carregarVagas();
+        });
+    </script>
+</body>
+</html>

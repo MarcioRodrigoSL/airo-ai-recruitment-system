@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRO.AI - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="logo-container"><img src="images/logo.png" alt="Logo AIRO.AI" class="logo"><h1>Airo.ai</h1></div>
+        <nav class="main-nav"><a href="dashboard.html">Dashboard</a><a href="ranking.html">Ranking</a><a href="vagas.html">Vagas Abertas</a><a href="configuracoes.html">Configurações</a><a href="login.html" id="logout-link">Sair</a></nav>
+    </header>
+    <main class="main-container">
+        <!-- SEÇÃO HERO COM OS CARDS CORRETOS -->
+        <section class="hero-section">
+            <h2>Bem-vindo ao seu Assistente de Recrutamento</h2>
+            <p>Inteligência Artificial para encontrar os melhores talentos, mais rápido.</p>
+            <div class="action-cards-container">
+                <a href="ranking.html" class="action-card"><h4><i class="fas fa-trophy"></i> Ver Ranking</h4><span>Classifique e filtre todos os candidatos.</span></a>
+                <a href="vagas.html" class="action-card"><h4><i class="fas fa-briefcase"></i> Gerenciar Vagas</h4><span>Crie, edite e gerencie as posições.</span></a>
+                <a href="configuracoes.html" class="action-card"><h4><i class="fas fa-cog"></i> Ajustar IA</h4><span>Personalize os pesos da análise.</span></a>
+            </div>
+        </section>
+        <section class="main-card">
+            <h2>Análise de Novo Candidato</h2>
+            <div class="input-row">
+                 <div class="input-group"><label for="nome">Nome do Candidato</label><input type="text" id="nome" placeholder="Ex: João da Silva"></div>
+                <div class="input-group"><label for="vaga">Associar à Vaga (Opcional )</label><select id="vaga" name="vaga"><option value="">-- Carregando... --</option></select></div>
+            </div>
+            <div class="input-row">
+                <div class="input-group"><label for="profissao">Profissão</label><select id="profissao" name="profissao"><option value="" disabled selected>Selecione...</option><option value="dev_backend">Dev. Backend</option><option value="dev_frontend">Dev. Frontend</option><option value="dev_fullstack">Dev. Full-Stack</option><option value="dba">DBA</option><option value="data_scientist">Cientista de Dados</option><option value="data_engineer">Eng. de Dados</option><option value="software_engineer">Eng. de Software</option><option value="devops">Eng. DevOps</option><option value="qa_analyst">Analista de QA</option></select></div>
+                <div class="input-group"><label for="nivel">Nível</label><select id="nivel" name="nivel"><option value="" disabled selected>Selecione...</option><option value="junior">Júnior</option><option value="pleno">Pleno</option><option value="senior">Sênior</option><option value="especialista">Especialista</option></select></div>
+            </div>
+            <div class="input-row">
+                <div class="input-group"><label for="curriculo">Currículo</label><textarea id="curriculo" rows="10" placeholder="Cole aqui o texto do currículo..."></textarea></div>
+                <div class="input-group"><label for="codigo">Código</label><textarea id="codigo" rows="10" placeholder="Cole aqui o código para análise..."></textarea></div>
+            </div>
+            <button id="btn-analisar" class="btn-analyze"><span class="spinner" style="display: none;"></span>Analisar Candidato</button>
+        </section>
+        <section class="main-card">
+            <h2>Resultado da Análise</h2>
+            <div class="results-grid">
+                <div class="result-card"><h3><i class="fas fa-file-alt"></i> Análise do Currículo</h3><p id="nota-curriculo" class="score">0<span>/100</span></p><div class="details"><h4>Palavras-chave:</h4><div id="detalhes-curriculo"><p>Nenhuma análise.</p></div></div></div>
+                <div class="result-card"><h3><i class="fas fa-code"></i> Análise do Código</h3><p id="nota-codigo" class="score">0<span>/100</span></p><div class="details"><h4>Detalhes:</h4><ul id="detalhes-codigo"><li>Nenhuma análise.</li></ul></div></div>
+            </div>
+        </section>
+    </main>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('http://127.0.0.1:5000/status', { method: 'GET', credentials: 'include' }  ).then(response => { if (!response.ok) { window.location.href = 'login.html'; } return response.json(); }).then(data => { if (data.status !== 'logado') { window.location.href = 'login.html'; } }).catch(() => { window.location.href = 'login.html'; });
+            const botaoAnalisar = document.getElementById('btn-analisar');
+            const textoOriginalBotao = 'Analisar Candidato';
+            const spinner = botaoAnalisar.querySelector('.spinner');
+            const vagaSelect = document.getElementById('vaga');
+            function carregarVagasAbertas() { fetch('http://127.0.0.1:5000/vagas/abertas', { credentials: 'include' }  ).then(response => response.json()).then(vagas => { vagaSelect.innerHTML = '<option value="">Nenhuma vaga específica</option>'; vagas.forEach(vaga => { vagaSelect.add(new Option(vaga.titulo, vaga.id)); }); }); }
+            carregarVagasAbertas();
+            botaoAnalisar.addEventListener('click', function() {
+                botaoAnalisar.disabled = true;
+                spinner.style.display = 'inline-block';
+                botaoAnalisar.textContent = 'Analisando...';
+                botaoAnalisar.prepend(spinner);
+                const dadosParaEnviar = { nome: document.getElementById('nome').value, curriculo: document.getElementById('curriculo').value, codigo: document.getElementById('codigo').value, profissao: document.getElementById('profissao').value, nivel: document.getElementById('nivel').value, vaga_id: document.getElementById('vaga').value || null };
+                fetch('http://127.0.0.1:5000/analisar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dadosParaEnviar  ), credentials: 'include' })
+                .then(response => response.json()).then(data => {
+                    document.getElementById('nota-curriculo').innerHTML = `${data.nota_curriculo}<span>/100</span>`;
+                    document.getElementById('nota-codigo').innerHTML = `${data.nota_codigo}<span>/100</span>`;
+                    const detalhesCurriculoDiv = document.getElementById('detalhes-curriculo');
+                    if (data.palavras_encontradas && data.palavras_encontradas.length > 0) { detalhesCurriculoDiv.innerHTML = data.palavras_encontradas.map(p => `<span class="tag">${p}</span>`).join(''); } else { detalhesCurriculoDiv.innerHTML = '<p>Nenhuma palavra-chave encontrada.</p>'; }
+                    const detalhesCodigoUl = document.getElementById('detalhes-codigo');
+                    if (data.detalhes_codigo && data.detalhes_codigo.length > 0) { detalhesCodigoUl.innerHTML = data.detalhes_codigo.map(f => `<li>Função '${f.name}': <strong>${f.complexidade}</strong></li>`).join(''); } else { detalhesCodigoUl.innerHTML = '<li>Nenhuma função analisável.</li>'; }
+                }).finally(() => { botaoAnalisar.disabled = false; spinner.style.display = 'none'; botaoAnalisar.textContent = textoOriginalBotao; });
+            });
+            document.getElementById('logout-link').addEventListener('click', function(e) { e.preventDefault(); fetch('http://127.0.0.1:5000/logout', { method: 'POST', credentials: 'include' }  ).then(() => { alert('Logout realizado!'); window.location.href = 'login.html'; }); });
+        });
+    </script>
+</body>
+</html>
