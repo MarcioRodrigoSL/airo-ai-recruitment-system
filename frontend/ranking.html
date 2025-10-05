@@ -5,14 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIRO.AI - Ranking de Candidatos</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <style>
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 5px;
+            transition: color 0.2s, transform 0.2s;
+        }
+        .btn-delete:hover {
+            color: #a71d2a;
+            transform: scale(1.2 );
+        }
+    </style>
 </head>
 <body>
     <header class="main-header">
         <div class="logo-container"><img src="images/logo.png" alt="Logo AIRO.AI" class="logo"><h1>Airo.ai</h1></div>
-        <nav class="main-nav"><a href="dashboard.html">Dashboard</a><a href="ranking.html">Ranking</a><a href="vagas.html">Vagas Abertas</a><a href="configuracoes.html">Configurações</a><a href="login.html" id="logout-link">Sair</a></nav>
+        <nav class="main-nav">
+            <a href="dashboard.html">Dashboard</a>
+            <a href="ranking.html">Ranking</a>
+            <a href="vagas.html">Vagas Abertas</a>
+            <a href="configuracoes.html">Configurações</a>
+            <a href="login.html" id="logout-link">Sair</a>
+        </nav>
     </header>
     <main class="main-container">
-        <div class="main-card">
+        <section class="main-card">
             <h2>Ranking de Candidatos</h2>
             <div class="filter-section">
                 <label for="filtro-profissao">Filtrar por Profissão:</label>
@@ -22,33 +44,52 @@
                 <table id="ranking-table">
                     <thead>
                         <tr>
-                            <th>Posição</th><th>Nome</th><th>Profissão</th><th>Vaga Associada</th><th>Nível</th>
-                            <th>Nota Currículo</th><th>Nota Código</th><th>Nota Final</th><th>Data Análise</th>
+                            <th>Posição</th>
+                            <th>Nome</th>
+                            <th>Profissão</th>
+                            <th>Vaga Associada</th>
+                            <th>Nível</th>
+                            <th>Nota Currículo</th>
+                            <th>Nota Código</th>
+                            <th>Nota Final</th>
+                            <th>Data Análise</th>
+                            <th>Ações</th> <!-- NOVA COLUNA -->
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
-        </div>
+        </section>
     </main>
     <script>
+        fetch('http://127.0.0.1:5000/status', { method: 'GET', credentials: 'include' }  ).then(response => { if (!response.ok) { window.location.href = 'login.html'; } return response.json(); }).then(data => { if (data.status !== 'logado') { window.location.href = 'login.html'; } }).catch(() => { window.location.href = 'login.html'; });
+        
         document.addEventListener("DOMContentLoaded", function() {
-            fetch('http://127.0.0.1:5000/status', { method: 'GET', credentials: 'include' }  ).then(response => { if (!response.ok) { window.location.href = 'login.html'; } return response.json(); }).then(data => { if (data.status !== 'logado') { window.location.href = 'login.html'; } }).catch(() => { window.location.href = 'login.html'; });
             const filtroProfissao = document.getElementById('filtro-profissao');
             const tbody = document.querySelector("#ranking-table tbody");
             let todosOsCandidatos = [];
             const nomesProfissoes = { 'dev_backend': 'Dev. Backend', 'dev_frontend': 'Dev. Frontend', 'dev_fullstack': 'Dev. Full-Stack', 'dba': 'DBA', 'data_scientist': 'Cientista de Dados', 'data_engineer': 'Engenheiro de Dados', 'software_engineer': 'Eng. de Software', 'devops': 'Eng. DevOps', 'qa_analyst': 'Analista de QA' };
-            function popularFiltro() { filtroProfissao.innerHTML = '<option value="todos">Todas as Profissões</option>'; for (const key in nomesProfissoes) { filtroProfissao.add(new Option(nomesProfissoes[key], nomesProfissoes[key])); } }
+
+            function popularFiltro() {
+                filtroProfissao.innerHTML = '<option value="todos">Todas as Profissões</option>';
+                for (const key in nomesProfissoes) {
+                    filtroProfissao.add(new Option(nomesProfissoes[key], nomesProfissoes[key]));
+                }
+            }
+
             function renderizarTabela(candidatos) {
                 tbody.innerHTML = "";
-                if (candidatos.length === 0) { tbody.innerHTML = `<tr><td colspan="9">Nenhum candidato encontrado.</td></tr>`; return; }
+                if (candidatos.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="10">Nenhum candidato encontrado.</td></tr>`;
+                    return;
+                }
                 candidatos.forEach((candidato, index) => {
                     const row = tbody.insertRow();
                     let posicaoCell = `${index + 1}`;
-                    // LÓGICA DAS MEDALHAS
                     if (index === 0) { row.classList.add('podium-gold'); posicaoCell = `🥇 ${posicaoCell}`; }
                     if (index === 1) { row.classList.add('podium-silver'); posicaoCell = `🥈 ${posicaoCell}`; }
                     if (index === 2) { row.classList.add('podium-bronze'); posicaoCell = `🥉 ${posicaoCell}`; }
+
                     row.insertCell().innerHTML = posicaoCell;
                     row.insertCell().textContent = candidato.nome;
                     row.insertCell().textContent = candidato.profissao;
@@ -58,14 +99,56 @@
                     row.insertCell().textContent = candidato.nota_codigo;
                     row.insertCell().textContent = candidato.nota_final;
                     row.insertCell().textContent = candidato.data_analise;
+                    
+                    // Célula com o botão de excluir
+                    const acoesCell = row.insertCell();
+                    acoesCell.innerHTML = `<button class="btn-delete" data-id="${candidato.id}" title="Excluir candidato"><i class="fas fa-trash-alt"></i></button>`;
                 });
             }
-            fetch("http://127.0.0.1:5000/ranking", { credentials: 'include' }  ).then(response => response.json()).then(data => { todosOsCandidatos = data; renderizarTabela(todosOsCandidatos); popularFiltro(); });
+
+            function carregarRanking() {
+                fetch("http://127.0.0.1:5000/ranking", { credentials: 'include' } )
+                    .then(response => response.json())
+                    .then(data => {
+                        todosOsCandidatos = data;
+                        renderizarTabela(todosOsCandidatos);
+                        popularFiltro();
+                    });
+            }
+
             filtroProfissao.addEventListener('change', function() {
                 const profissaoSelecionada = this.value;
-                if (profissaoSelecionada === 'todos') { renderizarTabela(todosOsCandidatos); } else { const candidatosFiltrados = todosOsCandidatos.filter(c => c.profissao === profissaoSelecionada); renderizarTabela(candidatosFiltrados); }
+                if (profissaoSelecionada === 'todos') {
+                    renderizarTabela(todosOsCandidatos);
+                } else {
+                    const candidatosFiltrados = todosOsCandidatos.filter(c => c.profissao === profissaoSelecionada);
+                    renderizarTabela(candidatosFiltrados);
+                }
             });
+
+            // Lógica para o clique no botão de excluir
+            tbody.addEventListener('click', function(event) {
+                const target = event.target.closest('.btn-delete');
+                if (target) {
+                    const candidatoId = target.dataset.id;
+                    const candidatoNome = target.closest('tr').cells[1].textContent;
+                    if (confirm(`Tem certeza que deseja excluir o candidato "${candidatoNome}"? Esta ação não pode ser desfeita.`)) {
+                        fetch(`http://127.0.0.1:5000/candidatos/${candidatoId}`, {
+                            method: 'DELETE',
+                            credentials: 'include'
+                        } )
+                        .then(res => res.json())
+                        .then(data => {
+                            alert(data.mensagem);
+                            carregarRanking(); // Recarrega a tabela para mostrar a mudança
+                        });
+                    }
+                }
+            });
+
             document.getElementById('logout-link').addEventListener('click', function(e) { e.preventDefault(); fetch('http://127.0.0.1:5000/logout', { method: 'POST', credentials: 'include' }  ).then(() => { alert('Logout realizado!'); window.location.href = 'login.html'; }); });
+
+            carregarRanking(); // Carga inicial dos dados
         });
     </script>
 </body>

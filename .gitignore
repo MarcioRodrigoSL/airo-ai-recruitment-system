@@ -14,3 +14,4 @@ __pycache__/
 
 # Arquivos de configuração do VS Code
 .vscode/
+**/__pycache__/

@@ -124,6 +124,19 @@ def get_ranking():
     conn.close()
     return jsonify([dict(row) for row in rows])
 
+# --- NOVA ROTA PARA EXCLUIR CANDIDATO ---
+@app.route('/candidatos/<int:id_candidato>', methods=['DELETE'])
+@login_required
+def excluir_candidato(id_candidato):
+    conn = sqlite3.connect(DATABASE_FILE)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM candidatos WHERE id = ?", (id_candidato,))
+    conn.commit()
+    mensagem = f'Candidato com ID {id_candidato} foi excluído.' if cursor.rowcount > 0 else f'Nenhum candidato encontrado com o ID {id_candidato}.'
+    conn.close()
+    return jsonify({'mensagem': mensagem})
+# --- FIM DA NOVA ROTA ---
+
 @app.route('/vagas', methods=['POST'])
 @login_required
 def cadastrar_vaga():
